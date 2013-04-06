@@ -233,21 +233,29 @@ public class SourceEditor {
     }
 
     /**
-     * @param term
+     * Opens contextual action bar to search the current file
      */
     @SuppressWarnings("deprecation")
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    public void find(final String term) {
-        if (android.os.Build.VERSION.SDK_INT >= 16) {
-            view.findAllAsync("to");
-            try {
-                Method m = WebView.class.getMethod("setFindIsUp", Boolean.TYPE);
-                m.setAccessible(true);
-                m.invoke(view, true);
-            } catch (Exception ignored) {
-            }
-        } else
-            view.findAll("to");
+    public void find() {
+        view.showFindDialog(null, true);
+        try {
+            Method m = WebView.class.getMethod("setFindIsUp", Boolean.TYPE);
+            m.setAccessible(true);
+            m.invoke(view, true);
+        } catch (Exception ignored) {
+        }
+
+        // if (android.os.Build.VERSION.SDK_INT >= 16) {
+        // view.findAllAsync("to");
+        // try {
+        // Method m = WebView.class.getMethod("setFindIsUp", Boolean.TYPE);
+        // m.setAccessible(true);
+        // m.invoke(view, true);
+        // } catch (Exception ignored) {
+        // }
+        // } else
+        // view.findAll("to");
     }
 
     /**

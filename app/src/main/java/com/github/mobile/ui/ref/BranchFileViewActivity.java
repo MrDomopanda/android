@@ -200,7 +200,8 @@ public class BranchFileViewActivity extends BaseActivity implements
                     .edit().putBoolean(WRAP, editor.getWrap()));
             return true;
         case id.m_share:
-            shareFile();
+//            shareFile();
+            editor.find();
             return true;
         case id.m_render_markdown:
             if (editor.isMarkdown()) {
