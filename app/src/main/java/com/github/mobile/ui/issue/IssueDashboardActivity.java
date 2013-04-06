@@ -31,6 +31,7 @@ import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.ActionBar.OnNavigationListener;
@@ -43,6 +44,7 @@ import com.github.mobile.persistence.AccountDataManager;
 import com.github.mobile.ui.TabPagerActivity;
 import com.github.mobile.ui.gist.GistsActivity;
 import com.github.mobile.ui.issue.FiltersViewActivity;
+import com.github.mobile.ui.user.HomeActivity;
 import com.github.mobile.ui.user.HomeDropdownListAdapter;
 import com.github.mobile.ui.user.OrganizationSelectionListener;
 import com.github.mobile.ui.user.OrganizationSelectionProvider;
@@ -98,7 +100,8 @@ public class IssueDashboardActivity extends
         super.onCreate(savedInstanceState);
 
         getSupportLoaderManager().initLoader(0, null, this);
-//        configureTabPager();
+        configureTabPager();
+        configureActionBar();
     }
 
     private void reloadOrgs() {
@@ -208,6 +211,8 @@ public class IssueDashboardActivity extends
     @Override
     public boolean onNavigationItemSelected(int itemPosition, long itemId) {
         if (homeAdapter.isOrgPosition(itemPosition)) {
+            Toast.makeText(getApplicationContext(),
+                    String.valueOf(itemPosition), Toast.LENGTH_LONG).show();
             homeAdapter.setSelected(itemPosition);
             setOrg(orgs.get(itemPosition));
         } else if (homeAdapter.getOrgCount() > 0) {
@@ -216,7 +221,8 @@ public class IssueDashboardActivity extends
                 startActivity(new Intent(this, GistsActivity.class));
                 break;
             case ACTION_DASHBOARD:
-                startActivity(new Intent(this, IssueDashboardActivity.class));
+                // startActivity(new Intent(this,
+                // IssueDashboardActivity.class));
                 break;
             case ACTION_BOOKMARKS:
                 startActivity(FiltersViewActivity.createIntent());
