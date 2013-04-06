@@ -17,8 +17,10 @@ package com.github.mobile.util;
 
 import static org.eclipse.egit.github.core.Blob.ENCODING_BASE64;
 import static org.eclipse.egit.github.core.client.IGitHubConstants.CHARSET_UTF8;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.text.TextUtils;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -27,6 +29,7 @@ import android.webkit.WebViewClient;
 import com.github.mobile.ui.UrlLauncher;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 
 import org.eclipse.egit.github.core.Blob;
 import org.eclipse.egit.github.core.util.EncodingUtils;
@@ -50,6 +53,8 @@ public class SourceEditor {
 
     private boolean markdown;
 
+    private boolean searchable;
+
     /**
      * Create source editor using given web view
      *
@@ -69,6 +74,11 @@ public class SourceEditor {
                     context.startActivity(intent);
                     return true;
                 }
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                searchable = true;
             }
         };
         view.setWebViewClient(client);
@@ -126,6 +136,13 @@ public class SourceEditor {
     }
 
     /**
+     * @return searchable
+     */
+    public boolean isSearchable() {
+        return searchable;
+    }
+
+    /**
      * Set whether lines should wrap
      *
      * @param wrap
@@ -145,6 +162,15 @@ public class SourceEditor {
      */
     public SourceEditor setMarkdown(final boolean markdown) {
         this.markdown = markdown;
+        return this;
+    }
+
+    /**
+     * @param searchable
+     * @return this editor
+     */
+    public SourceEditor setSearchable(final boolean searchable) {
+        this.searchable = searchable;
         return this;
     }
 
@@ -197,5 +223,37 @@ public class SourceEditor {
      */
     public SourceEditor toggleWrap() {
         return setWrap(!wrap);
+    }
+
+    /**
+     * @return this editor
+     */
+    public SourceEditor toggleSearchable() {
+        return setSearchable(!searchable);
+    }
+
+    /**
+     * @param term
+     */
+    @SuppressWarnings("deprecation")
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    public void find(final String term) {
+        if (android.os.Build.VERSION.SDK_INT >= 16) {
+            view.findAllAsync("to");
+            try {
+                Method m = WebView.class.getMethod("setFindIsUp", Boolean.TYPE);
+                m.setAccessible(true);
+                m.invoke(view, true);
+            } catch (Exception ignored) {
+            }
+        } else
+            view.findAll("to");
+    }
+
+    /**
+     * @param forward
+     */
+    public void findNext(final boolean forward) {
+        view.findNext(forward);
     }
 }
