@@ -50,6 +50,7 @@ import com.github.mobile.core.gist.FullGist;
 import com.github.mobile.core.gist.GistStore;
 import com.github.mobile.core.gist.RefreshGistTask;
 import com.github.mobile.core.gist.StarGistTask;
+import com.github.mobile.core.gist.StarredGistTask;
 import com.github.mobile.core.gist.UnstarGistTask;
 import com.github.mobile.ui.DialogFragment;
 import com.github.mobile.ui.HeaderFooterListAdapter;
@@ -73,7 +74,7 @@ import org.eclipse.egit.github.core.GistFile;
 import org.eclipse.egit.github.core.User;
 
 /**
- * Activity to display an existing Gist
+ * Fragment to display an existing Gist
  */
 public class GistFragment extends DialogFragment implements OnItemClickListener {
 
@@ -107,9 +108,13 @@ public class GistFragment extends DialogFragment implements OnItemClickListener 
 
     private HeaderFooterListAdapter<CommentListAdapter> adapter;
 
-    private boolean starred;
-
     private boolean loadFinished;
+
+    private boolean isStarred;
+
+    private boolean starredStatusChecked;
+
+    private MenuItem starItem;
 
     @Inject
     private AvatarLoader avatars;
@@ -233,9 +238,14 @@ public class GistFragment extends DialogFragment implements OnItemClickListener 
         boolean owner = isOwner();
         if (!owner) {
             menu.removeItem(id.m_delete);
-            MenuItem starItem = menu.findItem(id.m_star);
-            starItem.setEnabled(loadFinished && !owner);
-            if (starred)
+            starItem = menu.findItem(id.m_star);
+            if (owner) {
+                starItem.setEnabled(false);
+            } else {
+                starItem.setEnabled(loadFinished);
+                starItem.setVisible(starredStatusChecked);
+            }
+            if (isStarred)
                 starItem.setTitle(string.unstar);
             else
                 starItem.setTitle(string.star);
@@ -254,7 +264,7 @@ public class GistFragment extends DialogFragment implements OnItemClickListener 
                     COMMENT_CREATE);
             return true;
         case id.m_star:
-            if (starred)
+            if (isStarred)
                 unstarGist();
             else
                 starGist();
@@ -279,7 +289,7 @@ public class GistFragment extends DialogFragment implements OnItemClickListener 
             protected void onSuccess(Gist gist) throws Exception {
                 super.onSuccess(gist);
 
-                starred = true;
+                isStarred = true;
             }
 
             @Override
@@ -312,7 +322,7 @@ public class GistFragment extends DialogFragment implements OnItemClickListener 
             protected void onSuccess(Gist gist) throws Exception {
                 super.onSuccess(gist);
 
-                starred = false;
+                isStarred = false;
             }
 
             protected void onException(Exception e) throws RuntimeException {
@@ -380,7 +390,8 @@ public class GistFragment extends DialogFragment implements OnItemClickListener 
     }
 
     private void refreshGist() {
-        getSherlockActivity().setSupportProgressBarIndeterminateVisibility(true);
+        getSherlockActivity()
+                .setSupportProgressBarIndeterminateVisibility(true);
 
         new RefreshGistTask(getActivity(), gistId, imageGetter) {
 
@@ -388,7 +399,8 @@ public class GistFragment extends DialogFragment implements OnItemClickListener 
             protected void onException(Exception e) throws RuntimeException {
                 super.onException(e);
 
-                getSherlockActivity().setSupportProgressBarIndeterminateVisibility(false);
+                getSherlockActivity()
+                        .setSupportProgressBarIndeterminateVisibility(false);
                 ToastUtils.show(getActivity(), e, string.error_gist_load);
             }
 
@@ -405,13 +417,14 @@ public class GistFragment extends DialogFragment implements OnItemClickListener 
                     ((OnLoadListener<Gist>) activity)
                             .loaded(fullGist.getGist());
 
-                starred = fullGist.isStarred();
+                isStarred = fullGist.isStarred();
                 loadFinished = true;
                 gist = fullGist.getGist();
                 comments = fullGist;
                 updateList(fullGist.getGist(), fullGist);
 
-                getSherlockActivity().setSupportProgressBarIndeterminateVisibility(false);
+                getSherlockActivity()
+                        .setSupportProgressBarIndeterminateVisibility(false);
             }
 
         }.execute();
@@ -424,5 +437,22 @@ public class GistFragment extends DialogFragment implements OnItemClickListener 
         if (item instanceof GistFile)
             startActivity(GistFilesViewActivity
                     .createIntent(gist, position - 1));
+    }
+
+    private void checkStarredGistStatus() {
+        starredStatusChecked = false;
+
+        new StarredGistTask(getActivity().getBaseContext(), gist.getId()) {
+
+            @Override
+            protected void onSuccess(Boolean starred) throws Exception {
+                super.onSuccess(starred);
+
+                isStarred = starred;
+                starItem.setVisible(true);
+                starItem.setTitle(isStarred ? string.unstar : string.star);
+            }
+
+        }.execute();
     }
 }
